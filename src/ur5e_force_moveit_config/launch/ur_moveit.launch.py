@@ -110,7 +110,7 @@ def launch_setup(context, *args, **kwargs):
             safety_k_position,
             " ",
             "name:=",
-            "ur",
+            "ur5e_force",
             " ",
             "ur_type:=",
             ur_type,
@@ -128,7 +128,22 @@ def launch_setup(context, *args, **kwargs):
     )
     robot_description = {
         "robot_description": ParameterValue(robot_description_content, value_type=str)
+        
     }
+    robot_state_publisher_node = Node(
+    package="robot_state_publisher",
+    executable="robot_state_publisher",
+    output="screen",
+    parameters=[
+        robot_description,
+    ],)
+
+    joint_state_publisher_node = Node(
+    package="joint_state_publisher_gui",
+    executable="joint_state_publisher_gui",
+    output="screen",
+)
+
 
     # MoveIt Configuration
     robot_description_semantic_content = Command(
@@ -142,7 +157,7 @@ def launch_setup(context, *args, **kwargs):
             "name:=",
             # Also ur_type parameter could be used but then the planning group names in yaml
             # configs has to be updated!
-            "ur",
+            "ur5e_force",
             " ",
             "prefix:=",
             prefix,
@@ -155,9 +170,12 @@ def launch_setup(context, *args, **kwargs):
         "publish_robot_description_semantic": _publish_robot_description_semantic
     }
 
-    robot_description_kinematics = PathJoinSubstitution(
-        [FindPackageShare(moveit_config_package), "config", "kinematics.yaml"]
-    )
+    robot_description_kinematics = {
+        "robot_description_kinematics": load_yaml(
+            str(moveit_config_package.perform(context)),
+            "config/kinematics.yaml",
+        )
+    }
 
     robot_description_planning = {
         "robot_description_planning": load_yaml(
@@ -272,7 +290,7 @@ def launch_setup(context, *args, **kwargs):
         output="screen",
     )
 
-    nodes_to_start = [move_group_node, rviz_node, servo_node]
+    nodes_to_start = [move_group_node,rviz_node,servo_node,]
 
     return nodes_to_start
 
